@@ -31,7 +31,9 @@ class DataLoaderTest extends TestCase
     public function it_builds_a_really_simple_data_loader()
     {
         $identityLoader = new DataLoader(
-            fn ($keys) => new Success($keys),
+            function ( $keys) {
+				return new Success( $keys );
+			},
             new CacheMap()
         );
 
@@ -889,7 +891,9 @@ class DataLoaderTest extends TestCase
 
                 return new Success(
                     \array_map(
-                        fn ($key) => ($key % 2 === 0) ? $key : new \Exception("Odd: {$key}"),
+                        function ( $key) {
+							return ( $key % 2 === 0 ) ? $key : new \Exception( "Odd: {$key}" );
+						},
                         $keys
                     )
                 );
@@ -912,7 +916,9 @@ class DataLoaderTest extends TestCase
 
                 return new Success(
                     \array_map(
-                        fn ($key) => new \Exception("Error: {$key}"),
+                        function ( $key) {
+							return new \Exception( "Error: {$key}" );
+						},
                         $keys
                     )
                 );

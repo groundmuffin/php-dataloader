@@ -18,11 +18,11 @@ final class DataLoader implements DataLoaderInterface
      */
     private $batchLoadFunction;
 
-    private array $promiseQueue = [];
+    private $promiseQueue = [];
 
-    private CacheMapInterface $promiseCache;
+    private $promiseCache;
 
-    private DataLoaderOptions $options;
+    private $options;
 
     /**
      * Initiates a new DataLoader.
@@ -85,7 +85,9 @@ final class DataLoader implements DataLoaderInterface
     {
         return all(
             \array_map(
-                fn ($key) => $this->load($key),
+                function ( $key) {
+					return $this->load( $key );
+				},
                 $keys
             )
         );
@@ -133,7 +135,9 @@ final class DataLoader implements DataLoaderInterface
     {
 		if( $this->options->shouldBatch() ) {
 			Loop::defer(
-				fn() => $this->dispatchQueue()
+				function () {
+					return $this->dispatchQueue();
+				}
 			);
 
 			return;
