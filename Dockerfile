@@ -1,4 +1,4 @@
-FROM php:7.4-cli
+FROM php:7.1-cli
 RUN apt-get update && apt-get install -y libzip-dev zip && docker-php-ext-install zip
 RUN php -r "readfile('http://getcomposer.org/installer');" | php -- --install-dir=/usr/bin/ --filename=composer
 
