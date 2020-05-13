@@ -6,11 +6,10 @@ use leinonen\DataLoader\CacheMap;
 use leinonen\DataLoader\DataLoader;
 use leinonen\DataLoader\DataLoaderOptions;
 use PHPUnit\Framework\TestCase;
-use React\EventLoop\Factory;
-use React\EventLoop\LoopInterface;
 use function React\Promise\all;
 use React\Promise\Promise;
 use function React\Promise\resolve;
+use Amp\Loop;
 
 class DataLoaderTest extends TestCase
 {
@@ -21,14 +20,8 @@ class DataLoaderTest extends TestCase
      */
     private $loadCalls;
 
-    /**
-     * @var LoopInterface
-     */
-    private $eventLoop;
-
     public function setUp(): void
     {
-        $this->eventLoop = Factory::create();
         $this->loadCalls = [];
         parent::setUp();
     }
@@ -38,7 +31,6 @@ class DataLoaderTest extends TestCase
     {
         $identityLoader = new DataLoader(
             fn ($keys) => resolve($keys),
-            $this->eventLoop,
             new CacheMap()
         );
 
@@ -52,7 +44,7 @@ class DataLoaderTest extends TestCase
         $promise1->then(function ($value) use (&$value1) {
             $value1 = $value;
         });
-        $this->eventLoop->run();
+		Loop::run();
 
         $this->assertEquals(1, $value1);
     }
@@ -69,7 +61,7 @@ class DataLoaderTest extends TestCase
             $values = $returnValues;
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals([1, 2], $values);
 
@@ -81,7 +73,7 @@ class DataLoaderTest extends TestCase
             $empty = $returnValue;
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals([], $empty);
     }
@@ -100,7 +92,7 @@ class DataLoaderTest extends TestCase
             $values = $returnedValues;
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals(1, $values[0]);
         $this->assertEquals(2, $values[1]);
@@ -124,7 +116,7 @@ class DataLoaderTest extends TestCase
             $values = $returnedValues;
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals(1, $values[0]);
         $this->assertEquals(2, $values[1]);
@@ -149,7 +141,7 @@ class DataLoaderTest extends TestCase
             $values = $returnedValues;
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals(1, $values[0]);
         $this->assertEquals(2, $values[1]);
@@ -174,7 +166,7 @@ class DataLoaderTest extends TestCase
             $values = $returnedValues;
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals(1, $values[0]);
         $this->assertEquals(1, $values[1]);
@@ -198,7 +190,7 @@ class DataLoaderTest extends TestCase
             $b = $returnedValues[1];
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals('A', $a);
         $this->assertEquals('B', $b);
@@ -216,7 +208,7 @@ class DataLoaderTest extends TestCase
             $c = $returnedValues[1];
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals('A', $a2);
         $this->assertEquals('C', $c);
@@ -237,7 +229,7 @@ class DataLoaderTest extends TestCase
             $c2 = $returnedValues[2];
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals('A', $a3);
         $this->assertEquals('B', $b2);
@@ -262,7 +254,7 @@ class DataLoaderTest extends TestCase
             $b = $returnedValues[1];
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals('A', $a);
         $this->assertEquals('B', $b);
@@ -282,7 +274,7 @@ class DataLoaderTest extends TestCase
             $b2 = $returnedValues[1];
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals('A', $a2);
         $this->assertEquals('B', $b2);
@@ -306,7 +298,7 @@ class DataLoaderTest extends TestCase
             $b = $returnedValues[1];
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals('A', $a);
         $this->assertEquals('B', $b);
@@ -326,7 +318,7 @@ class DataLoaderTest extends TestCase
             $b2 = $returnedValues[1];
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals('A', $a2);
         $this->assertEquals('B', $b2);
@@ -352,7 +344,7 @@ class DataLoaderTest extends TestCase
             $b = $returnedValues[1];
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals('A', $a);
         $this->assertEquals('B', $b);
@@ -378,7 +370,7 @@ class DataLoaderTest extends TestCase
             $b1 = $returnedValues[1];
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals('X', $a1);
         $this->assertEquals('B', $b1);
@@ -397,7 +389,7 @@ class DataLoaderTest extends TestCase
             $b2 = $returnedValues[1];
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals('X', $a2);
         $this->assertEquals('B', $b2);
@@ -423,7 +415,7 @@ class DataLoaderTest extends TestCase
             $b1 = $returnedValues[1];
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals('X', $a1);
         $this->assertEquals('B', $b1);
@@ -444,7 +436,7 @@ class DataLoaderTest extends TestCase
             $b2 = $returnedValues[1];
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals('Y', $a2);
         $this->assertEquals('Y', $b2);
@@ -463,7 +455,7 @@ class DataLoaderTest extends TestCase
             $exception = $error;
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         /* @var \Exception $exception */
         $this->assertInstanceOf(\Exception::class, $exception);
@@ -476,7 +468,7 @@ class DataLoaderTest extends TestCase
             $result = $number;
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals(2, $result);
 
@@ -500,7 +492,7 @@ class DataLoaderTest extends TestCase
             $result = $number;
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         /* @var \Exception $exception */
         $this->assertInstanceOf(\Exception::class, $exception);
@@ -522,7 +514,7 @@ class DataLoaderTest extends TestCase
             $exceptionA = $error;
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         /* @var \Exception $exceptionA */
         $this->assertInstanceOf(\Exception::class, $exceptionA);
@@ -534,7 +526,7 @@ class DataLoaderTest extends TestCase
             $exceptionB = $error;
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         /* @var \Exception $exceptionB */
         $this->assertInstanceOf(\Exception::class, $exceptionB);
@@ -555,7 +547,7 @@ class DataLoaderTest extends TestCase
             $exceptionA = $error;
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         /* @var \Exception $exceptionA */
         $this->assertInstanceOf(\Exception::class, $exceptionA);
@@ -576,7 +568,7 @@ class DataLoaderTest extends TestCase
             $exceptionA = $error;
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         /* @var \Exception $exceptionA */
         $this->assertInstanceOf(\Exception::class, $exceptionA);
@@ -589,7 +581,7 @@ class DataLoaderTest extends TestCase
             $exceptionB = $error;
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         /* @var \Exception $exceptionB */
         $this->assertInstanceOf(\Exception::class, $exceptionB);
@@ -606,7 +598,7 @@ class DataLoaderTest extends TestCase
                 $this->loadCalls[] = $keys;
 
                 return \React\Promise\reject(new \Exception('I am a terrible loader'));
-            }, $this->eventLoop, new CacheMap()
+            }, new CacheMap()
         );
 
         $promise1 = $failLoader->load(1);
@@ -622,7 +614,7 @@ class DataLoaderTest extends TestCase
             $exception2 = $error;
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         /* @var \Exception $exception1 */
         $this->assertInstanceOf(\Exception::class, $exception1);
@@ -652,7 +644,7 @@ class DataLoaderTest extends TestCase
             $valueB = $returnedValues[1];
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals($keyA, $valueA);
         $this->assertEquals($keyB, $valueB);
@@ -675,7 +667,7 @@ class DataLoaderTest extends TestCase
             $valueB = $returnedValues[1];
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertCount(2, $this->loadCalls);
         $this->assertCount(1, $this->loadCalls[1]);
@@ -722,7 +714,7 @@ class DataLoaderTest extends TestCase
             $b = $returnedValues[1];
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals('A', $a);
         $this->assertEquals('B', $b);
@@ -740,7 +732,7 @@ class DataLoaderTest extends TestCase
             $c = $returnedValues[1];
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals('A', $a2);
         $this->assertEquals('C', $c);
@@ -761,7 +753,7 @@ class DataLoaderTest extends TestCase
             $c2 = $returnedValues[2];
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals('A', $a3);
         $this->assertEquals('B', $b2);
@@ -790,7 +782,7 @@ class DataLoaderTest extends TestCase
             }),
         ]);
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals([['A', 'B', 'C', 'D']], $this->loadCalls);
     }
@@ -804,7 +796,7 @@ class DataLoaderTest extends TestCase
                 $deepLoadCalls[] = $keys;
 
                 return resolve($keys);
-            }, $this->eventLoop, new CacheMap()
+            }, new CacheMap()
         );
 
         $aLoadCalls = [];
@@ -813,7 +805,7 @@ class DataLoaderTest extends TestCase
                 $aLoadCalls[] = $keys;
 
                 return $deepLoader->load($keys);
-            }, $this->eventLoop, new CacheMap()
+            }, new CacheMap()
         );
 
         $bLoadCalls = [];
@@ -822,7 +814,7 @@ class DataLoaderTest extends TestCase
                 $bLoadCalls[] = $keys;
 
                 return $deepLoader->load($keys);
-            }, $this->eventLoop, new CacheMap()
+            }, new CacheMap()
         );
 
         $a1 = null;
@@ -842,7 +834,7 @@ class DataLoaderTest extends TestCase
             $b2 = $returnedValues[3];
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         $this->assertEquals('A1', $a1);
         $this->assertEquals('A2', $a2);
@@ -868,7 +860,7 @@ class DataLoaderTest extends TestCase
                 $this->loadCalls[] = $keys;
 
                 return resolve($keys);
-            }, $this->eventLoop, new CacheMap(), $options
+            }, new CacheMap(), $options
         );
 
         return $identityLoader;
@@ -893,7 +885,7 @@ class DataLoaderTest extends TestCase
                         $keys
                     )
                 );
-            }, $this->eventLoop, new CacheMap(), $options
+            }, new CacheMap(), $options
         );
 
         return $evenLoader;
@@ -916,7 +908,7 @@ class DataLoaderTest extends TestCase
                         $keys
                     )
                 );
-            }, $this->eventLoop, new CacheMap()
+            }, new CacheMap()
         );
 
         return $exceptionLoader;

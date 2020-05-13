@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace leinonen\DataLoader;
 
-use React\EventLoop\LoopInterface;
 use function React\Promise\all;
 use React\Promise\ExtendedPromiseInterface;
 use React\Promise\Promise;
 use function React\Promise\reject;
 use function React\Promise\resolve;
+use Amp\Loop;
 
 final class DataLoader implements DataLoaderInterface
 {
@@ -22,8 +22,6 @@ final class DataLoader implements DataLoaderInterface
 
     private CacheMapInterface $promiseCache;
 
-    private LoopInterface $eventLoop;
-
     private DataLoaderOptions $options;
 
     /**
@@ -31,18 +29,15 @@ final class DataLoader implements DataLoaderInterface
      *
      * @param callable $batchLoadFunction The function which will be called for the batch loading.
      * It must accept an array of keys and returns a Promise which resolves to an array of values.
-     * @param LoopInterface $loop
      * @param CacheMapInterface $cacheMap
      * @param null|DataLoaderOptions $options
      */
     public function __construct(
         callable $batchLoadFunction,
-        LoopInterface $loop,
         CacheMapInterface $cacheMap,
         DataLoaderOptions $options = null
     ) {
         $this->batchLoadFunction = $batchLoadFunction;
-        $this->eventLoop = $loop;
         $this->promiseCache = $cacheMap;
         $this->options = $options ?? new DataLoaderOptions();
     }
@@ -132,16 +127,16 @@ final class DataLoader implements DataLoaderInterface
      */
     private function scheduleDispatch(): void
     {
-        if ($this->options->shouldBatch()) {
-            $this->eventLoop->futureTick(
-                fn () => $this->dispatchQueue()
-            );
+		if( $this->options->shouldBatch() ) {
+			Loop::defer(
+				fn() => $this->dispatchQueue()
+			);
 
-            return;
-        }
+			return;
+		}
 
-        $this->dispatchQueue();
-    }
+		$this->dispatchQueue();
+	}
 
     /**
      * Resets and dispatches the DataLoaders queue.

@@ -6,23 +6,12 @@ use leinonen\DataLoader\CacheMap;
 use leinonen\DataLoader\DataLoader;
 use leinonen\DataLoader\DataLoaderException;
 use PHPUnit\Framework\TestCase;
-use React\EventLoop\Factory;
-use React\EventLoop\LoopInterface;
 use React\Promise\Promise;
 use function React\Promise\resolve;
+use Amp\Loop;
 
 class DataLoaderAbuseTest extends TestCase
 {
-    /**
-     * @var LoopInterface
-     */
-    private $eventLoop;
-
-    public function setUp(): void
-    {
-        $this->eventLoop = Factory::create();
-    }
-
     /**
      * @test
      */
@@ -74,7 +63,7 @@ class DataLoaderAbuseTest extends TestCase
             $exception = $value;
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         /** @var DataLoaderException $exception */
         $expectedExceptionMessage = 'leinonen\DataLoader\DataLoader must be constructed with a function which accepts an array of keys '
@@ -98,7 +87,7 @@ class DataLoaderAbuseTest extends TestCase
             $exception = $value;
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         /** @var DataLoaderException $exception */
         $expectedExceptionMessage = 'leinonen\DataLoader\DataLoader must be constructed with a function which accepts an array of keys '
@@ -122,7 +111,7 @@ class DataLoaderAbuseTest extends TestCase
             $exception = $value;
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         /** @var DataLoaderException $exception */
         $expectedExceptionMessage = 'leinonen\DataLoader\DataLoader must be constructed with a function which accepts an array of keys '
@@ -139,7 +128,7 @@ class DataLoaderAbuseTest extends TestCase
         $badLoader = new DataLoader(
             function ($keys) {
                 return new \stdClass();
-            }, $this->eventLoop, new CacheMap()
+            }, new CacheMap()
         );
         $exception = null;
 
@@ -147,7 +136,7 @@ class DataLoaderAbuseTest extends TestCase
             $exception = $value;
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         /** @var DataLoaderException $exception */
         $expectedExceptionMessage = 'leinonen\DataLoader\DataLoader must be constructed with a function which accepts an array of keys '
@@ -171,7 +160,7 @@ class DataLoaderAbuseTest extends TestCase
             $exception = $value;
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         /** @var DataLoaderException $exception */
         $expectedExceptionMessage = 'leinonen\DataLoader\DataLoader must be constructed with a function which accepts an array of keys '
@@ -195,7 +184,7 @@ class DataLoaderAbuseTest extends TestCase
             $exception = $value;
         });
 
-        $this->eventLoop->run();
+        Loop::run();
 
         /** @var DataLoaderException $exception */
         $expectedExceptionMessage = 'leinonen\DataLoader\DataLoader must be constructed with a function which accepts an array of keys '
@@ -215,6 +204,6 @@ class DataLoaderAbuseTest extends TestCase
      */
     private function createDataLoader($batchLoadFunction, $options = null)
     {
-        return new DataLoader($batchLoadFunction, $this->eventLoop, new CacheMap(), $options);
+        return new DataLoader($batchLoadFunction, new CacheMap(), $options);
     }
 }
