@@ -2,15 +2,15 @@
 
 namespace leinonen\DataLoader\Tests\Unit;
 
-use React\Promise\Promise;
-use React\EventLoop\Factory;
-use function React\Promise\all;
-use PHPUnit\Framework\TestCase;
 use leinonen\DataLoader\CacheMap;
-use React\EventLoop\LoopInterface;
-use function React\Promise\resolve;
 use leinonen\DataLoader\DataLoader;
 use leinonen\DataLoader\DataLoaderOptions;
+use PHPUnit\Framework\TestCase;
+use React\EventLoop\Factory;
+use React\EventLoop\LoopInterface;
+use function React\Promise\all;
+use React\Promise\Promise;
+use function React\Promise\resolve;
 
 class DataLoaderTest extends TestCase
 {
@@ -37,9 +37,9 @@ class DataLoaderTest extends TestCase
     public function it_builds_a_really_simple_data_loader()
     {
         $identityLoader = new DataLoader(
-            function ($keys) {
-                return resolve($keys);
-            }, $this->eventLoop, new CacheMap()
+            fn ($keys) => resolve($keys),
+            $this->eventLoop,
+            new CacheMap()
         );
 
         /** @var Promise $promise1 */
@@ -888,14 +888,8 @@ class DataLoaderTest extends TestCase
                 $this->loadCalls[] = $keys;
 
                 return resolve(
-                    array_map(
-                        function ($key) {
-                            if ($key % 2 === 0) {
-                                return $key;
-                            }
-
-                            return new \Exception("Odd: {$key}");
-                        },
+                    \array_map(
+                        fn ($key) => ($key % 2 === 0) ? $key : new \Exception("Odd: {$key}"),
                         $keys
                     )
                 );
@@ -917,10 +911,8 @@ class DataLoaderTest extends TestCase
                 $this->loadCalls[] = $keys;
 
                 return resolve(
-                    array_map(
-                        function ($key) {
-                            return new \Exception("Error: {$key}");
-                        },
+                    \array_map(
+                        fn ($key) => new \Exception("Error: {$key}"),
                         $keys
                     )
                 );

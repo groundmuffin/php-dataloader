@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace leinonen\DataLoader;
 
-use React\Promise\Promise;
-use function React\Promise\all;
-use function React\Promise\reject;
 use React\EventLoop\LoopInterface;
-use function React\Promise\resolve;
+use function React\Promise\all;
 use React\Promise\ExtendedPromiseInterface;
+use React\Promise\Promise;
+use function React\Promise\reject;
+use function React\Promise\resolve;
 
 final class DataLoader implements DataLoaderInterface
 {
@@ -18,25 +18,13 @@ final class DataLoader implements DataLoaderInterface
      */
     private $batchLoadFunction;
 
-    /**
-     * @var array
-     */
-    private $promiseQueue = [];
+    private array $promiseQueue = [];
 
-    /**
-     * @var CacheMapInterface
-     */
-    private $promiseCache;
+    private CacheMapInterface $promiseCache;
 
-    /**
-     * @var LoopInterface
-     */
-    private $eventLoop;
+    private LoopInterface $eventLoop;
 
-    /**
-     * @var DataLoaderOptions
-     */
-    private $options;
+    private DataLoaderOptions $options;
 
     /**
      * Initiates a new DataLoader.
@@ -100,9 +88,7 @@ final class DataLoader implements DataLoaderInterface
     {
         return all(
             \array_map(
-                function ($key) {
-                    return $this->load($key);
-                },
+                fn ($key) => $this->load($key),
                 $keys
             )
         );
@@ -148,9 +134,7 @@ final class DataLoader implements DataLoaderInterface
     {
         if ($this->options->shouldBatch()) {
             $this->eventLoop->futureTick(
-                function () {
-                    $this->dispatchQueue();
-                }
+                fn () => $this->dispatchQueue()
             );
 
             return;
@@ -170,12 +154,13 @@ final class DataLoader implements DataLoaderInterface
         $this->promiseQueue = [];
 
         $maxBatchSize = $this->options->getMaxBatchSize();
+        $shouldBeDispatchedInMultipleBatches = $maxBatchSize !== null
+            && $maxBatchSize > 0
+            && $maxBatchSize < count($queue);
 
-        if ($maxBatchSize !== null && $maxBatchSize > 0 && $maxBatchSize < count($queue)) {
-            $this->dispatchQueueInMultipleBatches($queue, $maxBatchSize);
-        } else {
-            $this->dispatchQueueBatch($queue);
-        }
+        $shouldBeDispatchedInMultipleBatches
+            ? $this->dispatchQueueInMultipleBatches($queue, $maxBatchSize)
+            : $this->dispatchQueueBatch($queue);
     }
 
     /**
@@ -197,14 +182,14 @@ final class DataLoader implements DataLoaderInterface
             return $this->handleFailedDispatch($batch, $exception);
         }
 
-        $batchPromise->then(
-            function ($values) use ($batch, $keys) {
-                $this->validateBatchPromiseOutput($values, $keys);
-                $this->handleSuccessfulDispatch($batch, $values);
-            }
-        )->then(null, function ($error) use ($batch) {
-            $this->handleFailedDispatch($batch, $error);
-        });
+        $batchPromise
+            ->then(
+                function ($values) use ($batch, $keys) {
+                    $this->validateBatchPromiseOutput($values, $keys);
+                    $this->handleSuccessfulDispatch($batch, $values);
+                }
+            )
+            ->then(null, fn ($error) => $this->handleFailedDispatch($batch, $error));
     }
 
     /**
@@ -236,11 +221,9 @@ final class DataLoader implements DataLoaderInterface
     {
         foreach ($batch as $index => $queueItem) {
             $value = $values[$index];
-            if ($value instanceof \Exception) {
-                $queueItem['reject']($value);
-            } else {
-                $queueItem['resolve']($value);
-            }
+            $value instanceof \Exception
+                ? $queueItem['reject']($value)
+                : $queueItem['resolve']($value);
         }
     }
 
