@@ -6,9 +6,10 @@ use leinonen\DataLoader\CacheMap;
 use leinonen\DataLoader\DataLoader;
 use leinonen\DataLoader\DataLoaderException;
 use PHPUnit\Framework\TestCase;
-use React\Promise\Promise;
-use function React\Promise\resolve;
+
+use Amp\Promise;
 use Amp\Loop;
+use Amp\Success;
 
 class DataLoaderAbuseTest extends TestCase
 {
@@ -21,7 +22,7 @@ class DataLoaderAbuseTest extends TestCase
         $this->expectExceptionMessage('leinonen\DataLoader\DataLoader::load must be called with a value, but got null');
 
         $loader = $this->createDataLoader(function ($keys) {
-            return resolve($keys);
+            return new Success($keys);
         });
         $loader->load(null);
     }
@@ -30,7 +31,7 @@ class DataLoaderAbuseTest extends TestCase
     public function falsey_values_are_however_permitted()
     {
         $loader = $this->createDataLoader(function ($keys) {
-            return resolve($keys);
+            return new Success($keys);
         });
         $this->assertInstanceOf(Promise::class, $loader->load(0));
     }
@@ -44,7 +45,7 @@ class DataLoaderAbuseTest extends TestCase
         $this->expectExceptionMessage('leinonen\DataLoader\DataLoader::load must be called with a value, but got null');
 
         $loader = $this->createDataLoader(function ($keys) {
-            return resolve($keys);
+            return new Success($keys);
         });
         $loader->loadMany([null, null]);
     }
@@ -59,7 +60,7 @@ class DataLoaderAbuseTest extends TestCase
 
         $exception = null;
 
-        $badLoader->load(1)->then(null, function ($value) use (&$exception) {
+        $badLoader->load(1)->onResolve(function ($value) use (&$exception) {
             $exception = $value;
         });
 
@@ -83,7 +84,7 @@ class DataLoaderAbuseTest extends TestCase
 
         $exception = null;
 
-        $badLoader->load(1)->then(null, function ($value) use (&$exception) {
+        $badLoader->load(1)->onResolve(function ($value) use (&$exception) {
             $exception = $value;
         });
 
@@ -107,7 +108,7 @@ class DataLoaderAbuseTest extends TestCase
 
         $exception = null;
 
-        $badLoader->load(1)->then(null, function ($value) use (&$exception) {
+        $badLoader->load(1)->onResolve(function ($value) use (&$exception) {
             $exception = $value;
         });
 
@@ -132,7 +133,7 @@ class DataLoaderAbuseTest extends TestCase
         );
         $exception = null;
 
-        $badLoader->load(1)->then(null, function ($value) use (&$exception) {
+        $badLoader->load(1)->onResolve(function ($value) use (&$exception) {
             $exception = $value;
         });
 
@@ -151,12 +152,12 @@ class DataLoaderAbuseTest extends TestCase
     public function batch_function_must_return_a_promise_of_an_array_not_null()
     {
         $badLoader = $this->createDataLoader(function ($keys) {
-            return resolve();
+            return new Success();
         });
 
         $exception = null;
 
-        $badLoader->load(1)->then(null, function ($value) use (&$exception) {
+        $badLoader->load(1)->onResolve(function ($value) use (&$exception) {
             $exception = $value;
         });
 
@@ -175,12 +176,12 @@ class DataLoaderAbuseTest extends TestCase
     public function batch_function_must_promise_an_array_of_correct_length()
     {
         $emptyArrayLoader = $this->createDataLoader(function ($keys) {
-            return resolve([]);
+            return new Success([]);
         });
 
         $exception = null;
 
-        $emptyArrayLoader->load(1)->then(null, function ($value) use (&$exception) {
+        $emptyArrayLoader->load(1)->onResolve(function ($value) use (&$exception) {
             $exception = $value;
         });
 

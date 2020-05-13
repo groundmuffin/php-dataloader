@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace leinonen\DataLoader;
 
-use React\Promise\ExtendedPromiseInterface;
-use React\Promise\Promise;
+use Amp\Promise;
 
 interface DataLoaderInterface
 {
@@ -14,10 +13,10 @@ interface DataLoaderInterface
      *
      * @param mixed $key
      *
-     * @return ExtendedPromiseInterface
+     * @return Promise
      * @throws \InvalidArgumentException
      */
-    public function load($key): ExtendedPromiseInterface;
+    public function load($key): Promise;
 
     /**
      * Loads multiple keys, promising an array of values.
@@ -31,10 +30,10 @@ interface DataLoaderInterface
      *
      * @param array $keys
      *
-     * @return ExtendedPromiseInterface
+     * @return Promise
      * @throws \InvalidArgumentException
      */
-    public function loadMany(array $keys): ExtendedPromiseInterface;
+    public function loadMany(array $keys): Promise;
 
     /**
      * Clears the value for the given key from the cache if it exists.

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace leinonen\DataLoader;
 
-use function React\Promise\all;
-use React\Promise\ExtendedPromiseInterface;
-use React\Promise\Promise;
-use function React\Promise\reject;
-use function React\Promise\resolve;
 use Amp\Loop;
+use Amp\Deferred;
+use Amp\Promise;
+use Amp\Success;
+use Amp\Failure;
+use function Amp\Promise\all;
 
 final class DataLoader implements DataLoaderInterface
 {
@@ -45,7 +45,7 @@ final class DataLoader implements DataLoaderInterface
     /**
      * {@inheritdoc}
      */
-    public function load($key): ExtendedPromiseInterface
+    public function load($key): Promise
     {
         if ($key === null) {
             throw new \InvalidArgumentException(self::class . '::load must be called with a value, but got null');
@@ -55,31 +55,33 @@ final class DataLoader implements DataLoaderInterface
             return $this->promiseCache->get($key);
         }
 
-        $promise = new Promise(
-            function (callable $resolve, callable $reject) use ($key) {
-                $this->promiseQueue[] = [
-                    'key' => $key,
-                    'resolve' => $resolve,
-                    'reject' => $reject,
-                ];
+		$deferred = new Deferred();
+		$resolve = array($deferred, 'resolve');
+		$fail = array($deferred, 'fail');
 
-                if (\count($this->promiseQueue) === 1) {
-                    $this->scheduleDispatch();
-                }
-            }
-        );
+		$this->promiseQueue[] = [
+			'key'     => $key,
+			'resolve' => $resolve,
+			'reject'  => $fail,
+		];
 
-        if ($this->options->shouldCache()) {
-            $this->promiseCache->set($key, $promise);
-        }
+		if( \count( $this->promiseQueue ) === 1 ) {
+			$this->scheduleDispatch();
+		}
 
-        return $promise;
+		$promise = $deferred->promise();
+
+		if( $this->options->shouldCache() ) {
+			$this->promiseCache->set( $key, $promise );
+		}
+
+		return $promise;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function loadMany(array $keys): ExtendedPromiseInterface
+    public function loadMany(array $keys): Promise
     {
         return all(
             \array_map(
@@ -113,7 +115,9 @@ final class DataLoader implements DataLoaderInterface
         if (! $this->promiseCache->get($key)) {
             // Cache a rejected promise if the value is an Exception, in order to match
             // the behavior of load($key).
-            $promise = $value instanceof \Exception ? reject($value) : resolve($value);
+            $promise = $value instanceof \Exception
+				? new Failure( $value )
+				: new Success( $value );
 
             $this->promiseCache->set($key, $promise);
         }
@@ -178,13 +182,22 @@ final class DataLoader implements DataLoaderInterface
         }
 
         $batchPromise
-            ->then(
-                function ($values) use ($batch, $keys) {
-                    $this->validateBatchPromiseOutput($values, $keys);
-                    $this->handleSuccessfulDispatch($batch, $values);
-                }
-            )
-            ->then(null, fn ($error) => $this->handleFailedDispatch($batch, $error));
+			->onResolve(
+				function ($error, $values) use ($batch, $keys) {
+					if($error) {
+						$this->handleFailedDispatch($batch, $error);
+					}
+					else {
+						try {
+							$this->validateBatchPromiseOutput($values, $keys);
+						} catch (DataLoaderException $exception) {
+							return $this->handleFailedDispatch($batch, $exception);
+						}
+
+						$this->handleSuccessfulDispatch($batch, $values);
+					}
+				}
+			);
     }
 
     /**
@@ -274,7 +287,7 @@ final class DataLoader implements DataLoaderInterface
      */
     private function validateBatchPromise($batchPromise): void
     {
-        if (! $batchPromise || ! \is_callable([$batchPromise, 'then'])) {
+        if (! $batchPromise || ! \is_callable([$batchPromise, 'onResolve'])) {
             throw new DataLoaderException(
                 self::class . ' must be constructed with a function which accepts ' .
                 'an array of keys and returns a Promise which resolves to an array of values ' .
