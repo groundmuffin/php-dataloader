@@ -6,11 +6,11 @@ namespace leinonen\DataLoader;
 
 final class DataLoaderOptions
 {
-    private bool $shouldBatch;
+    private $shouldBatch;
 
-    private ?int $maxBatchSize;
+    private $maxBatchSize;
 
-    private bool $shouldCache;
+    private $shouldCache;
 
     public function __construct(
         ?int $maxBatchSize = null,
